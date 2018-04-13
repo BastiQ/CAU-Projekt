@@ -38,19 +38,19 @@ with open(INSTANCE) as infile:
             DRIVING_TIMES.append([int(n) for n in line.rstrip().split()])
     DRIVING_TIMES = np.array(DRIVING_TIMES).astype(np.int16)
 
-nodes = np.shape(DRIVING_TIMES)[0]
-
 # Remove the Exchange points:
 DRIVING_TIMES_SLICED = DRIVING_TIMES[0:-NUM_EXCHANGE, 0:-NUM_EXCHANGE]
+nodes = np.shape(DRIVING_TIMES_SLICED)[0]
 
 CLUSTER_COUNT = VEHICLE_COUNT # this changes later
-cluster_Array = cluserting(DRIVING_TIMES_SLICED, CLUSTER_COUNT)
+cluserting(DRIVING_TIMES_SLICED, CLUSTER_COUNT)
+# cluster_Array =
 # cluster_Array Array von Arrays mit Punkten die sich im jeweiligen Cluster befinden
 
 # For the 2-opt alg. implementation just use all Nodes. Later there will be clusters
-cluster_Array = range(nodes)
+cluster_Array = np.linspace(0,nodes-1,nodes)
 CLUSTER_COUNT = 1
-for cluser in cluster_Array:
-    sorted_Array, completion_time = opt2(cluser, DRIVING_TIMES_SLICED, CLUSTER_COUNT)
+sorted_Array, completion_time = opt2(cluster_Array, DRIVING_TIMES_SLICED, CLUSTER_COUNT)
+# for cluster in cluster_Array: # later there will be more than one cluster
 
 # VEHICLE_COUNT wird erhoeht von Mutterprogramm (abhaenglig von 2-opt)
