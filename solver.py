@@ -6,6 +6,8 @@
 ## Best algorithm would be 2-Opt + Simulated annealing (i guess)
 import numpy as np
 np.set_printoptions(threshold=np.nan) # completely print big arrays
+from Opt2 import opt2
+from Clustering import cluserting
 
 # Configure:
 INSTANCE = "Testinstanzen/1_10.txt"
@@ -20,7 +22,6 @@ DRIVING_TIMES = []
 
 with open(INSTANCE) as infile:
     driving_times = False
-    driving_times_line = 0
     for line in infile:
         if "NUM_EXCHANGE" in line:
             NUM_EXCHANGE = int(line[13:])
@@ -35,7 +36,21 @@ with open(INSTANCE) as infile:
         elif driving_times:
             # if driving_times_line == 0:
             DRIVING_TIMES.append([int(n) for n in line.rstrip().split()])
-            driving_times_line += 1
     DRIVING_TIMES = np.array(DRIVING_TIMES).astype(np.int16)
 
 nodes = np.shape(DRIVING_TIMES)[0]
+
+# Remove the Exchange points:
+DRIVING_TIMES_SLICED = DRIVING_TIMES[0:-NUM_EXCHANGE, 0:-NUM_EXCHANGE]
+
+CLUSTER_COUNT = VEHICLE_COUNT # this changes later
+cluster_Array = cluserting(DRIVING_TIMES_SLICED, CLUSTER_COUNT)
+# cluster_Array Array von Arrays mit Punkten die sich im jeweiligen Cluster befinden
+
+# For the 2-opt alg. implementation just use all Nodes. Later there will be clusters
+cluster_Array = range(nodes)
+CLUSTER_COUNT = 1
+for cluser in cluster_Array:
+    sorted_Array, completion_time = opt2(cluser, DRIVING_TIMES_SLICED, CLUSTER_COUNT)
+
+# VEHICLE_COUNT wird erhoeht von Mutterprogramm (abhaenglig von 2-opt)
