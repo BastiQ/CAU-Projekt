@@ -10,7 +10,7 @@ from Opt2 import opt2
 from Clustering import cluserting
 
 # Configure:
-INSTANCE = "Testinstanzen/1_80.txt"
+INSTANCE = "Testinstanzen/1_10.txt"
 VEHICLE_COUNT = 1
 ###################################
 
