@@ -33,23 +33,20 @@ def __distanceMatrixToPoints_onlyFirstThree(A, farestPoint=False):
     points = np.zeros((A.shape[1],2))
     # first fixed point is 0,0 (it's the Lab)
     # Second point as far away as possible from the first one: (https://bit.ly/2qHwZg4)
-    secondPoint = np.argmax(A[0,1:])+1 # exclude first zero for argmin # argmax for index (armax for value)
+    secondPoint = 1 # second fixed point at (x=0, y= 1 or distance to doc whos farest away)
     if farestPoint:
-        points[1] = [0, A[0, secondPoint]] # second fixed point at (x=0, y=distance to doc whos farest away)
-    else:
-        secondPoint = 1
-        points[1] = [0, A[0, 1]] # second fixed point at (x=0, y=distance to doc whos farest away)
-    # print(secondPoint)
-    for p in range(2,len(points)): # from third point to last point
-        backup_p = p
+        secondPoint = np.argmax(A[0,1:])+1 # exclude first zero for argmin # argmax for index (armax for value)
+    points[secondPoint] = [0,A[0,secondPoint]]
+
+    for p in range(1,len(points)): # from third point to last point
         if p == secondPoint: # this Point has allready been used above
-            p = 1
+            continue
         d13 = A[0,p] # point 3 changes each loop -> used p instead of 3
-        d23 = A[1,p]
+        d23 = A[secondPoint,p]
         x1 = 0
         y1 = 0
         x2 = 0 # actually not needed
-        y2 = A[0,1] # to the second Point
+        y2 = A[0,secondPoint] # distance to the second Point = y2-coordinate
         # Calculate y3 and x3 (formulars generated with wolfram Alpha):
         y3 = np.divide((-np.square(d13)+np.square(d23)+np.square(y1)-np.square(y2)), 2*(y1-y2))
         x3 = x1+np.sqrt(-np.square(y3)+np.square(d13)+2*y3*y1-np.square(y1))
@@ -58,13 +55,11 @@ def __distanceMatrixToPoints_onlyFirstThree(A, farestPoint=False):
         if p > 2: # only now the third point is defined
             dPositive = np.sqrt(np.square(x3 - points[2][0]) + np.square(y3 - points[2][1]))
             dNegative = np.sqrt(np.square(-x3 - points[2][0]) + np.square(y3 - points[2][1]))
-            dPositive_DiffToA = np.abs(dPositive - A[3,p])
-            dNagative_DiffToA = np.abs(dNegative - A[3,p])
+            dPositive_DiffToA = np.abs(dPositive - A[2,p])
+            dNagative_DiffToA = np.abs(dNegative - A[2,p])
             if dNagative_DiffToA < dPositive_DiffToA:
                 x3 = -x3
         # and save the calculated location:
-        if backup_p == secondPoint:
-            p = secondPoint # put the point 2 on the place of the chosen secondPoint
         points[p] = [x3,y3]
     return points
 
@@ -153,22 +148,19 @@ def __matrixDifference(A,B):
     return err
 
 def __plot2D(A):
-    points1 = __distanceMatrixToPoints_onlyFirstThree(A, False)        # n-1 Dimensions to 2D (err(10) = 232202/297272, err(30) = 3483812/3610502)
-    points2 = __distanceMatrixToPoints_onlyFirstThree(A, True)        # n-1 Dimensions to 2D (err(10) = 232202/297272, err(30) = 3483812/3610502)
-    # points = __distanceMatrixToPoints_midEuclid(A)  # err: 469522/613622/399714 -> this is bad
+    points1 = __distanceMatrixToPoints_onlyFirstThree(A, False)  # n-1 Dimensions to 2D (err(10) = 146060, err(30) = 2223666)
+    points2 = __distanceMatrixToPoints_onlyFirstThree(A, True)   # n-1 Dimensions to 2D (err(10) = 140712, err(30) = 1364990) -> this is the best!
+    # points = __distanceMatrixToPoints_midEuclid(A)             # n-1 Dimensions to 2D (err(10)= 469522/613622/399714) -> this is bad
 
     D = __pointsToDistanceMatrix(points1)  # Distances in the model
     err = __matrixDifference(A, D)  # copare original distances and projected distances in 2D
-    # print("err1: " + str(err))
+    print("err1: " + str(err))
     D      = __pointsToDistanceMatrix(points2)   # Distances in the model
     err    = __matrixDifference(A,D)            # copare original distances and projected distances in 2D
-    # print("err2 (p2=farest away): "+str(err))
+    print("err2 (p2=farest away): "+str(err))
 
-    plt.scatter(points2[:,0],points2[:,1], color="brown") # point 2 is farest away
     plt.scatter(points1[:,0],points1[:,1])
-
-    # plt.scatter(points1[1, 0], points1[1, 1], color="green") # second point
-    # plt.scatter(points2[1, 0], points2[1, 1], color="black") # second point
+    plt.scatter(points2[:,0],points2[:,1], color="brown") # point 2 is farest away
 
     plt.scatter(0,0,color="red")
     plt.annotate("Lab",(0,0))
