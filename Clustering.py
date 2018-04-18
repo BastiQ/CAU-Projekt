@@ -12,6 +12,9 @@ import random
 from sklearn.cluster import spectral_clustering
 import matplotlib.pyplot as plt
 
+#############   GLOBAL VARS   #############
+optimalSecondPoint = None
+
 ########################################   DIMENSION REDUCTION   ########################################
 
 def __distanceMatrixToPointsIfExact(A):
@@ -28,14 +31,14 @@ def __distanceMatrixToPointsIfExact(A):
     points = np.array(points)
     return points
 
-def __distanceMatrixToPoints_onlyFirstThree(A, farestPoint=False):
+def __distanceMatrixToPoints_onlyFirstThree(A, secondPoint=1):
     # Using 2 initial Points and locate them in space, calculate all other point locations using there distances
     points = np.zeros((A.shape[1],2))
     # first fixed point is 0,0 (it's the Lab)
     # Second point as far away as possible from the first one: (https://bit.ly/2qHwZg4)
-    secondPoint = 1 # second fixed point at (x=0, y= 1 or distance to doc whos farest away)
-    if farestPoint:
-        secondPoint = np.argmax(A[0,1:])+1 # exclude first zero for argmin # argmax for index (armax for value)
+    # secondPoint = 1 # second fixed point at (x=0, y= 1 or distance to doc whos farest away)
+    # if farestPoint:
+    #     secondPoint = np.argmax(A[0,1:])+1 # exclude first zero for argmin # argmax for index (armax for value)
     points[secondPoint] = [0,A[0,secondPoint]]
 
     for p in range(1,len(points)): # from third point to last point
@@ -147,24 +150,43 @@ def __matrixDifference(A,B):
         print("A and B must have the same shape (in __matrixDifference(A,B))")
     return err
 
-def __plot2D(A):
-    points1 = __distanceMatrixToPoints_onlyFirstThree(A, False)  # n-1 Dimensions to 2D (err(10) = 146060, err(30) = 2223666)
-    points2 = __distanceMatrixToPoints_onlyFirstThree(A, True)   # n-1 Dimensions to 2D (err(10) = 140712, err(30) = 1364990) -> this is the best!
+def __to2D(A):
+    # Iterate through all Points and choose the best second Point:
+    global optimalSecondPoint
+    if not optimalSecondPoint: # if its not allready calculated for this problem...
+        optimalSecondPoint = 1
+        minErr = 100000000000
+        for secondPoint in range(1, A.shape[1]):
+            points = __distanceMatrixToPoints_onlyFirstThree(A, secondPoint)  # n-1 Dimensions to 2D (err(10) = 146060, err(30) = 2223666)
+            D = __pointsToDistanceMatrix(points)  # Distances in the model ([n-1]D to 2D)
+            err = __matrixDifference(A, D)  # compare original distances and projected distances in 2D
+            print("Point: "+str(secondPoint)+" err: " + str(err))
+            # plt.scatter(points[:,0],points[:,1], c=np.random.rand(3,)) # Plot from all Points as second Points
+            # plt.scatter(0,0,color="red")
+            # plt.annotate("Lab",(0,0))
+            if err < minErr:
+                minErr = err
+                optimalSecondPoint = secondPoint
+                # plt.scatter(points[:, 0], points[:, 1], c=np.random.rand(3, ))
+                # for i,p in enumerate(points):
+                #     plt.annotate(str(i), (p[0], p[1]))
+                # plt.annotate("err: "+str(err),(points[2, 0], points[2, 1]))
+                # plt.annotate("Lab",(0,0))
+        # plt.show()
+    # OLD:
+    # points = __distanceMatrixToPoints_onlyFirstThree(A,False)  # n-1 Dimensions to 2D (err(10) = 146060, err(30) = 2223666)
+    # points2 = __distanceMatrixToPoints_onlyFirstThree(A, True)   # n-1 Dimensions to 2D (err(10) = 140712, err(30) = 1364990) -> this is the best!
     # points = __distanceMatrixToPoints_midEuclid(A)             # n-1 Dimensions to 2D (err(10)= 469522/613622/399714) -> this is bad
-
-    D = __pointsToDistanceMatrix(points1)  # Distances in the model
-    err = __matrixDifference(A, D)  # copare original distances and projected distances in 2D
-    print("err1: " + str(err))
-    D      = __pointsToDistanceMatrix(points2)   # Distances in the model
-    err    = __matrixDifference(A,D)            # copare original distances and projected distances in 2D
-    print("err2 (p2=farest away): "+str(err))
-
-    plt.scatter(points1[:,0],points1[:,1])
-    plt.scatter(points2[:,0],points2[:,1], color="brown") # point 2 is farest away
-
-    plt.scatter(0,0,color="red")
-    plt.annotate("Lab",(0,0))
-    plt.show()
+    # D      = __pointsToDistanceMatrix(points2)   # Distances in the model
+    # err    = __matrixDifference(A,D)            # copare original distances and projected distances in 2D
+    # print("err2 (p2=farest away): "+str(err))
+    points = __distanceMatrixToPoints_onlyFirstThree(A, optimalSecondPoint)
+    print("Optimal Point: "+str(optimalSecondPoint)+", minimal err: " + str(minErr))
+    # plt.scatter(points[:,0],points[:,1], c=np.random.rand(3,))
+    # plt.scatter(0,0,color="red")
+    # plt.annotate("Lab",(0,0))
+    # plt.show()
+    return points
 
 ########################################   CLUSTERING   ########################################
 
@@ -204,7 +226,7 @@ def approximateTimeNeededWithKNN(A, cluster):
     return distanceSum
 
 def cluserting(DRIVING_TIMES, CLUSTER_COUNT):
-    __plot2D(DRIVING_TIMES)
+    __to2D(DRIVING_TIMES)
     CLUSTER_COUNT = 4 # for testing
     # labels = use_spectral_clustering(DRIVING_TIMES.astype(np.float64), CLUSTER_COUNT)
         # How many points are in each cluster:
