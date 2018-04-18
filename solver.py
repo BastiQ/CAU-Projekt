@@ -50,7 +50,7 @@ cluserting(DRIVING_TIMES_SLICED, CLUSTER_COUNT)
 # For the 2-opt alg. implementation just use all Nodes. Later there will be clusters
 cluster_Array = np.linspace(0,nodes-1,nodes)
 CLUSTER_COUNT = 1
-sorted_Array, completion_time = opt2(cluster_Array, DRIVING_TIMES_SLICED, CLUSTER_COUNT)
+sorted_Array = opt2(DRIVING_TIMES)
 # for cluster in cluster_Array: # later there will be more than one cluster
 
 # VEHICLE_COUNT wird erhoeht von Mutterprogramm (abhaenglig von 2-opt)
