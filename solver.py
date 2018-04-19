@@ -5,9 +5,11 @@
 ## Underestimated minimum distance ist the sum of the minimum from all rows in the DRIVING_TIMES Matrix
 ## Best algorithm would be 2-Opt + Simulated annealing (i guess)
 import numpy as np
-np.set_printoptions(threshold=np.nan) # completely print big arrays
-from Opt2 import opt2
+import copy
 from Clustering import cluserting
+from Opt2 import opt2
+from Clustering import plot
+np.set_printoptions(threshold=np.nan) # completely print big arrays
 
 # Configure:
 INSTANCE = "Testinstanzen/1_10.txt"
@@ -36,21 +38,27 @@ with open(INSTANCE) as infile:
         elif driving_times:
             # if driving_times_line == 0:
             DRIVING_TIMES.append([int(n) for n in line.rstrip().split()])
-    DRIVING_TIMES = np.array(DRIVING_TIMES).astype(np.int16)
+    DRIVING_TIMES = np.array(DRIVING_TIMES).astype(np.int32)
 
 # Remove the Exchange points:
 DRIVING_TIMES_SLICED = DRIVING_TIMES[0:-NUM_EXCHANGE, 0:-NUM_EXCHANGE]
 nodes = np.shape(DRIVING_TIMES_SLICED)[0]
 
 CLUSTER_COUNT = VEHICLE_COUNT # this changes later
-cluserting(DRIVING_TIMES_SLICED, CLUSTER_COUNT)
-# cluster_Array =
-# cluster_Array Array von Arrays mit Punkten die sich im jeweiligen Cluster befinden
 
-# For the 2-opt alg. implementation just use all Nodes. Later there will be clusters
-cluster_Array = np.linspace(0,nodes-1,nodes)
-CLUSTER_COUNT = 1
-sorted_Array = opt2(DRIVING_TIMES)
-# for cluster in cluster_Array: # later there will be more than one cluster
+points, clusterSets = cluserting(DRIVING_TIMES_SLICED, CLUSTER_COUNT)
+plot(points,clusterSets)
 
-# VEHICLE_COUNT wird erhoeht von Mutterprogramm (abhaenglig von 2-opt)
+paths = []
+for clusterNr, cluster in enumerate(clusterSets):
+    B = copy.deepcopy(DRIVING_TIMES_SLICED) # B = DRIVING_TIMES des aktuellen Clusters
+    delete = [d for d in range(B.shape[0]) if d not in cluster]
+    B = np.delete(B, (delete), axis=0)
+    B = np.delete(B, (delete), axis=1)
+
+    # print(B)
+    path = opt2(B)
+    # paths.append(path)
+    # print(path)
+
+    # VEHICLE_COUNT wird erhoeht von Mutterprogramm (abhaenglig von 2-opt)
