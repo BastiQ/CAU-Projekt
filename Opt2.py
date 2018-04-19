@@ -87,7 +87,10 @@ def opt2Main(best_map, driving_map):
 
 def annealing(best_map, best_distance, driving_map, paramk, t0, tolerance):
     diff = 1000
-    while diff > tolerance:
+    meandiff = 1000.
+    totaldiff = 0
+    counter = 1
+    while meandiff > tolerance:
         ran_map = np.copy(best_map)
         ran_map_slice = ran_map[1: (len(best_map) - 1)]
         np.random.shuffle(ran_map_slice)
@@ -95,7 +98,9 @@ def annealing(best_map, best_distance, driving_map, paramk, t0, tolerance):
 
         ran_distance = compute_total_distance(ran_map, driving_map)
         diff = 1 / (1 + math.exp((best_distance - ran_distance)/t0))
-
+        totaldiff += diff
+        counter += 1
+        meandiff = totaldiff/counter
         if diff > random.randrange(0, 1):
             best_map = np.copy(ran_map)
             print(best_distance - ran_distance, "diff")
@@ -103,7 +108,7 @@ def annealing(best_map, best_distance, driving_map, paramk, t0, tolerance):
             best_distance = ran_distance
 
         t0 = t0 * np.power(paramk, 0.95)
-        print(t0, "coolingTemp", diff, "diff")
+        print(t0, "coolingTemp", diff, "diff", meandiff, "meandiff")
     return best_map
 
 
