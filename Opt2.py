@@ -27,8 +27,9 @@ def opt2(DRIVING_TIMES):
         To_Find_Dest -= 1
     Route.append(0)
 
-    # print(compute_total_distance(Route, DRIVING_TIMES), "simple")
 
+    # print(compute_total_distance(Route, DRIVING_TIMES), "simple")
+    Route = np.array(Route)
     Route1 = start_opt2(Route, DRIVING_TIMES)
     counter = 0
     supcounter = 0
@@ -49,7 +50,7 @@ def opt2(DRIVING_TIMES):
     #         print(supcounter)
     #
     # print(minTime, "min")
-
+    return Route1
 
 
 
@@ -67,60 +68,54 @@ def find_nearest_above(my_array, target):
 
 
 def opt2Hilf(best_map, i, j):
-    new_map = best_map[:]
+    new_map = np.copy(best_map)
     new_map[i:j] = new_map[i:j][::-1]
     return new_map
 
 
-def start_opt2(road_map, driving_map):
-    best_map = road_map[:]
-    ran_map = best_map[:]
-    best_distance = compute_total_distance(best_map, driving_map)
-    coolingTemp = 1000000
-    new_map = best_map[:]
-    ran_distance = compute_total_distance(new_map, driving_map)
+def opt2Main(best_map, driving_map):
+    distance = compute_total_distance(best_map, driving_map)
+    _map = np.copy(best_map)
     for i in range(1, len(best_map)):
         for j in range(i + 1, len(best_map)):
-            new_map = opt2Hilf(best_map, i, j)
+            new_map = opt2Hilf(_map, i, j)
             new_distance = compute_total_distance(new_map, driving_map)
+            if new_distance < distance:
+                distance = new_distance
+                _map = np.copy(new_map)
+    return _map
 
-        if new_distance < ran_distance:
-            ran_distance = new_distance
-            ran_map = new_map[:]
-    # print(ran_distance,"best before annealing")
-    # while coolingTemp > 100000:
-    #
-    #     # ran1 = random.randint(1, len(best_map))
-    #     # ran2 = random.randint(1, len(best_map))
-    #     # new_distance = 0
-    #     #
-    #     # if ran2 < ran1:
-    #     #     saveran = 0
-    #     #     ran1 = saveran
-    #     #     ran1 = ran2
-    #     #     ran2 = saveran
-    #     #
-    #     # new_map = opt2Hilf(best_map, ran1, ran2)
-    #
-    #
-    #     for i in range(1, len(best_map)):
-    #         for j in range(i + 1, len(best_map)):
-    #             new_map = opt2Hilf(best_map, i, j)
-    #             new_distance = compute_total_distance(new_map, driving_map)
-    #
-    #         if new_distance < ran_distance:
-    #             ran_distance = new_distance
-    #             ran_map = new_map[:]
-    #
-    #     ran_distance = compute_total_distance(ran_map, driving_map)
-    #
-    #     if ((math.exp((best_distance - ran_distance)/coolingTemp)) > random.randrange(0, 1)) and\
-    #             best_distance != ran_distance:
-    #         best_map = ran_map[:]
-    #         best_distance = ran_distance
-    #         #print(best_distance - ran_distance)
-    #     else:
-    #         coolingTemp -= 1000
+def annealing(best_map, best_distance, driving_map, paramk, t0, tolerance):
+    diff = 1000
+    while diff > tolerance:
+        ran_map = np.copy(best_map)
+        ran_map_slice = ran_map[1: (len(best_map) - 1)]
+        np.random.shuffle(ran_map_slice)
+        ran_map = opt2Main(ran_map, driving_map)
+
+        ran_distance = compute_total_distance(ran_map, driving_map)
+        diff = 1 / (1 + math.exp((best_distance - ran_distance)/t0))
+
+        if diff > random.randrange(0, 1):
+            best_map = np.copy(ran_map)
+            # print(best_distance - ran_distance, "diff")
+
+            best_distance = ran_distance
+
+        t0 = t0 * np.power(paramk, 0.95)
+        # print(t0, "coolingTemp", diff, "diff")
+    return best_map
+
+
+def start_opt2(best_map, driving_map):
+    coolingTemp = 100000
+    best_map = opt2Main(best_map, driving_map)
+    distance = compute_total_distance(best_map, driving_map)
+
+    best_map = annealing(best_map, distance, driving_map, 1., 1000., 0.5)
+
+    best_distance = compute_total_distance(best_map, driving_map)
+    # print(best_distance, "nach")
     return best_map
 
 
