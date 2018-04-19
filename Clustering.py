@@ -10,13 +10,13 @@ import numpy as np
 import copy
 import random
 import matplotlib.pyplot as plt
-import Opt2
 from sklearn.cluster import KMeans
+from sklearn.metrics import pairwise_distances_argmin
 from sklearn.cluster import AgglomerativeClustering
 
 #############   GLOBAL VARS   #############
 optimalSecondPoint = None
-PLOT_PATH = True
+PLOT_HERE = False
 
 ########################################   DIMENSION REDUCTION   ########################################
 
@@ -221,26 +221,7 @@ def approximateTimeNeededWithKNN(A, cluster):
 
     return distanceSum, path
 
-
-
-def cluserting(DRIVING_TIMES, CLUSTER_COUNT):
-    print("Finding best 2D fit...")
-    points = __to2D(DRIVING_TIMES)
-    CLUSTER_COUNT = 5 # for testing
-    # labels = spectral_clustering(DRIVING_TIMES.astype(np.float64), CLUSTER_COUNT) # Produces a different result every time
-
-    print("Clustering...")
-    labels = KMeans(CLUSTER_COUNT, random_state=0).fit_predict(points)
-    # labels = AgglomerativeClustering(CLUSTER_COUNT).fit_predict(points)
-    print(labels)
-
-    # How many points are in each cluster:
-    unique, counts = np.unique(labels, return_counts=True)
-    print("Points in Cluster x: "+str(dict(zip(unique, counts))))
-
-    # labels -> sets of points (The real Clusters)
-    clusterSets = labelsToSets(labels, CLUSTER_COUNT)
-
+def plot(points, clusterSets, DRIVING_TIMES=None, paths=None):
     for clusterNr, cluster in enumerate(clusterSets):
         clusterPoints = [points[p] for p in cluster]
         # Plot:
@@ -248,14 +229,9 @@ def cluserting(DRIVING_TIMES, CLUSTER_COUNT):
         for p in clusterPoints:
             plt.annotate(str(clusterNr), (p[0], p[1]))
 
-        # print("__________________________________")
-        # print("Cluster: "+str(cluster))
-        time, path = approximateTimeNeededWithKNN(DRIVING_TIMES, cluster)
-        # print("path: "+str(path))
-        # print("Cluster: "+str(clusterNr)+" time KNN: "+str(time))
-
         # Plot Path:
-        if PLOT_PATH:
+        if paths:
+            path = paths[clusterNr]
             lastP = None
             for p in path:
                 if lastP is None:
@@ -266,6 +242,67 @@ def cluserting(DRIVING_TIMES, CLUSTER_COUNT):
 
     plt.annotate("Lab",(0,0))
     plt.show()
+
+
+def my_special_KMeans(X, n_clusters, rseed=0):
+    # 1. Randomly choose clusters
+    rng = np.random.RandomState(rseed)
+    i = rng.permutation(X.shape[0])[:n_clusters]
+    centers = X[i]
+    while True:
+        # 2a. Assign labels based on closest center
+        labels = pairwise_distances_argmin(X, centers)
+        # 2b. Find new centers from means of points
+        new_centers = np.zeros(centers.shape)
+        for i in range(n_clusters):
+            clusterPoints = np.array(X[labels == i])
+            withLab = np.vstack([clusterPoints,[0,0]])
+            new_centers[i] = withLab.mean(0)
+        # new_centers = np.array([X[labels == i].mean(0) for i in range(n_clusters)])
+        # 2c. Check for convergence
+        if np.all(centers == new_centers):
+            break
+        centers = new_centers
+    return centers, labels
+
+
+
+
+def cluserting(DRIVING_TIMES, CLUSTER_COUNT):
+    print("Finding best 2D fit...")
+    points = __to2D(DRIVING_TIMES)
+    # CLUSTER_COUNT = 5 # for testing
+    # labels = spectral_clustering(DRIVING_TIMES.astype(np.float64), CLUSTER_COUNT) # Produces a different result every time
+
+    print("Clustering...")
+    # labels = KMeans(CLUSTER_COUNT, random_state=0).fit_predict(points)
+    centers, labels = my_special_KMeans(points,CLUSTER_COUNT)
+    # labels = AgglomerativeClustering(CLUSTER_COUNT).fit_predict(points)
+    # print(labels)
+
+    # How many points are in each cluster:
+    unique, counts = np.unique(labels, return_counts=True)
+    # print("Points in Cluster x: "+str(dict(zip(unique, counts))))
+
+    # labels -> sets of points (The real Clusters)
+    clusterSets = labelsToSets(labels, CLUSTER_COUNT)
+
+    if PLOT_HERE:
+        # EXAMPLE Path finder (KNN):
+        times = []
+        paths = []
+        for cluster in clusterSets:
+            # print("__________________________________")
+            # print("Cluster: "+str(cluster))
+            time, path = approximateTimeNeededWithKNN(DRIVING_TIMES, cluster)
+            times.append(time)
+            paths.append(path)
+            # print("path: "+str(path))
+            # print("Cluster: "+str(clusterNr)+" time KNN: "+str(time))
+        plot(points,clusterSets,DRIVING_TIMES,paths)
+
+    return points, clusterSets
+
 
 
 

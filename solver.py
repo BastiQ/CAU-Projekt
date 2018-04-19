@@ -12,7 +12,7 @@ from Clustering import plot
 np.set_printoptions(threshold=np.nan) # completely print big arrays
 
 # Configure:
-INSTANCE = "Testinstanzen/1_10.txt"
+INSTANCE = "Testinstanzen/1_80.txt"
 VEHICLE_COUNT = 1
 ###################################
 
@@ -47,7 +47,6 @@ nodes = np.shape(DRIVING_TIMES_SLICED)[0]
 CLUSTER_COUNT = VEHICLE_COUNT # this changes later
 
 points, clusterSets = cluserting(DRIVING_TIMES_SLICED, CLUSTER_COUNT)
-plot(points,clusterSets)
 
 paths = []
 for clusterNr, cluster in enumerate(clusterSets):
@@ -56,9 +55,11 @@ for clusterNr, cluster in enumerate(clusterSets):
     B = np.delete(B, (delete), axis=0)
     B = np.delete(B, (delete), axis=1)
 
-    # print(B)
+    print("search ideal path (2-opt)...")
     path = opt2(B)
-    # paths.append(path)
+    paths.append(path)
     # print(path)
 
-    # VEHICLE_COUNT wird erhoeht von Mutterprogramm (abhaenglig von 2-opt)
+plot(points,clusterSets,None,paths)
+
+# VEHICLE_COUNT wird erhoeht von Mutterprogramm (abhaenglig von 2-opt)
