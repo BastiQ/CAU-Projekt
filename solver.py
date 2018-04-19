@@ -38,4 +38,6 @@ with open(INSTANCE) as infile:
             driving_times_line += 1
     DRIVING_TIMES = np.array(DRIVING_TIMES).astype(np.int16)
 
+print(DRIVING_TIMES)
+
 nodes = np.shape(DRIVING_TIMES)[0]
