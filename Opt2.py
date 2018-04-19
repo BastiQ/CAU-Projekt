@@ -27,13 +27,13 @@ def opt2(DRIVING_TIMES):
         To_Find_Dest -= 1
     Route.append(0)
 
-    print(compute_total_distance(Route, DRIVING_TIMES), "simple")
+    # print(compute_total_distance(Route, DRIVING_TIMES), "simple")
 
     Route1 = start_opt2(Route, DRIVING_TIMES)
     counter = 0
     supcounter = 0
     minTime = compute_total_distance(Route1, DRIVING_TIMES)
-    print(minTime, "adv")
+    # print(minTime, "adv")
     # Route = [1,2,3,4,5,6,7,8,9,10]
     #
     # for perm in it.permutations(Route):
@@ -87,40 +87,40 @@ def start_opt2(road_map, driving_map):
         if new_distance < ran_distance:
             ran_distance = new_distance
             ran_map = new_map[:]
-    print(ran_distance,"best before annealing")
-    while coolingTemp > 100000:
-
-        # ran1 = random.randint(1, len(best_map))
-        # ran2 = random.randint(1, len(best_map))
-        # new_distance = 0
-        #
-        # if ran2 < ran1:
-        #     saveran = 0
-        #     ran1 = saveran
-        #     ran1 = ran2
-        #     ran2 = saveran
-        #
-        # new_map = opt2Hilf(best_map, ran1, ran2)
-
-
-        for i in range(1, len(best_map)):
-            for j in range(i + 1, len(best_map)):
-                new_map = opt2Hilf(best_map, i, j)
-                new_distance = compute_total_distance(new_map, driving_map)
-
-            if new_distance < ran_distance:
-                ran_distance = new_distance
-                ran_map = new_map[:]
-
-        ran_distance = compute_total_distance(ran_map, driving_map)
-
-        if ((math.exp((best_distance - ran_distance)/coolingTemp)) > random.randrange(0, 1)) and\
-                best_distance != ran_distance:
-            best_map = ran_map[:]
-            best_distance = ran_distance
-            #print(best_distance - ran_distance)
-        else:
-            coolingTemp -= 1000
+    # print(ran_distance,"best before annealing")
+    # while coolingTemp > 100000:
+    #
+    #     # ran1 = random.randint(1, len(best_map))
+    #     # ran2 = random.randint(1, len(best_map))
+    #     # new_distance = 0
+    #     #
+    #     # if ran2 < ran1:
+    #     #     saveran = 0
+    #     #     ran1 = saveran
+    #     #     ran1 = ran2
+    #     #     ran2 = saveran
+    #     #
+    #     # new_map = opt2Hilf(best_map, ran1, ran2)
+    #
+    #
+    #     for i in range(1, len(best_map)):
+    #         for j in range(i + 1, len(best_map)):
+    #             new_map = opt2Hilf(best_map, i, j)
+    #             new_distance = compute_total_distance(new_map, driving_map)
+    #
+    #         if new_distance < ran_distance:
+    #             ran_distance = new_distance
+    #             ran_map = new_map[:]
+    #
+    #     ran_distance = compute_total_distance(ran_map, driving_map)
+    #
+    #     if ((math.exp((best_distance - ran_distance)/coolingTemp)) > random.randrange(0, 1)) and\
+    #             best_distance != ran_distance:
+    #         best_map = ran_map[:]
+    #         best_distance = ran_distance
+    #         #print(best_distance - ran_distance)
+    #     else:
+    #         coolingTemp -= 1000
     return best_map
 
 
