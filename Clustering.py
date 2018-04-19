@@ -9,11 +9,14 @@
 import numpy as np
 import copy
 import random
-from sklearn.cluster import spectral_clustering
 import matplotlib.pyplot as plt
+import Opt2
+from sklearn.cluster import KMeans
+from sklearn.cluster import AgglomerativeClustering
 
 #############   GLOBAL VARS   #############
 optimalSecondPoint = None
+PLOT_PATH = True
 
 ########################################   DIMENSION REDUCTION   ########################################
 
@@ -160,7 +163,7 @@ def __to2D(A):
             points = __distanceMatrixToPoints_onlyFirstThree(A, secondPoint)  # n-1 Dimensions to 2D (err(10) = 146060, err(30) = 2223666)
             D = __pointsToDistanceMatrix(points)  # Distances in the model ([n-1]D to 2D)
             err = __matrixDifference(A, D)  # compare original distances and projected distances in 2D
-            print("Point: "+str(secondPoint)+" err: " + str(err))
+            # print("Point: "+str(secondPoint)+" err: " + str(err))
             # plt.scatter(points[:,0],points[:,1], c=np.random.rand(3,)) # Plot from all Points as second Points
             # plt.scatter(0,0,color="red")
             # plt.annotate("Lab",(0,0))
@@ -173,15 +176,9 @@ def __to2D(A):
                 # plt.annotate("err: "+str(err),(points[2, 0], points[2, 1]))
                 # plt.annotate("Lab",(0,0))
         # plt.show()
-    # OLD:
-    # points = __distanceMatrixToPoints_onlyFirstThree(A,False)  # n-1 Dimensions to 2D (err(10) = 146060, err(30) = 2223666)
-    # points2 = __distanceMatrixToPoints_onlyFirstThree(A, True)   # n-1 Dimensions to 2D (err(10) = 140712, err(30) = 1364990) -> this is the best!
-    # points = __distanceMatrixToPoints_midEuclid(A)             # n-1 Dimensions to 2D (err(10)= 469522/613622/399714) -> this is bad
-    # D      = __pointsToDistanceMatrix(points2)   # Distances in the model
-    # err    = __matrixDifference(A,D)            # copare original distances and projected distances in 2D
-    # print("err2 (p2=farest away): "+str(err))
     points = __distanceMatrixToPoints_onlyFirstThree(A, optimalSecondPoint)
-    print("Optimal Point: "+str(optimalSecondPoint)+", minimal err: " + str(minErr))
+    # print("Optimal Point: "+str(optimalSecondPoint)) # +", minimal err: " + str(minErr))
+
     # plt.scatter(points[:,0],points[:,1], c=np.random.rand(3,))
     # plt.scatter(0,0,color="red")
     # plt.annotate("Lab",(0,0))
@@ -190,55 +187,85 @@ def __to2D(A):
 
 ########################################   CLUSTERING   ########################################
 
-def use_spectral_clustering(A, CLUSTER_COUNT):
-    # numParts = int(round(np.shape(A)[0] / CLUSTER_COUNT,0))
-    labels = spectral_clustering(A, CLUSTER_COUNT) # Produces a different result every time
-    return labels
-
 def labelsToSets(labels, CLUSTER_COUNT):
     clusterSets = [[] for _ in range(CLUSTER_COUNT)]
     for i, label in enumerate(labels):
         clusterSets[label].append(i)
     # DONT wunder about the "array" keword when you print out the return. Its because the Elements dont have the same size!!!
-    return np.array([np.array(cluster) for cluster in clusterSets])
+    return np.array([cluster for cluster in clusterSets])
 
 def approximateTimeNeededWithKNN(A, cluster):
     placesLeft = copy.deepcopy(list(cluster))
-    placesLeft= np.trim_zeros(placesLeft) # if the start node is in this cluster, remove it
+    placesLeft = np.array(np.trim_zeros(placesLeft)) # if the start node is in this cluster, remove it
     path = [0] # first node is the Laboratory
     distanceSum = 0
+
     for _ in range(len(placesLeft)):
         lowestDist = 1000000000
         nearestNeighbor = 0
+        currentPlace = path[-1]
         for neighbor in placesLeft:
-            dist = A[path[-1], neighbor]
-            if dist != 0:
-                if dist < lowestDist:
-                    lowestDist = dist
-                    nearestNeighbor = neighbor
+            dist = A[currentPlace, neighbor]
+            if dist < lowestDist:
+                lowestDist = dist
+                nearestNeighbor = neighbor
         distanceSum += lowestDist
         path.append(nearestNeighbor)
         placesLeft = np.delete(placesLeft, np.argwhere(placesLeft == nearestNeighbor))
+        # print("places Left "+str(placesLeft))
+        # print("nearest neighbor: "+str(nearestNeighbor))
+
     # go back to the start:
     distanceSum += A[path[-1], 0]
     path.append(0)
-    # print("path: "+str(path))
-    return distanceSum
+
+    return distanceSum, path
+
+
 
 def cluserting(DRIVING_TIMES, CLUSTER_COUNT):
-    __to2D(DRIVING_TIMES)
-    CLUSTER_COUNT = 4 # for testing
-    # labels = use_spectral_clustering(DRIVING_TIMES.astype(np.float64), CLUSTER_COUNT)
-        # How many points are in each cluster:
-        # unique, counts = np.unique(labels, return_counts=True)
-        # print(dict(zip(unique, counts)))
-    # clusterSets = labelsToSets(labels, CLUSTER_COUNT)
-    # for cluster in clusterSets:
-    #     # print("__________________________________")
-    #     # print("Cluster: "+str(cluster))
-    #     time = approximateTimeNeededWithKNN(DRIVING_TIMES, cluster)
-    #     # print(" time: "+str(time))
+    print("Finding best 2D fit...")
+    points = __to2D(DRIVING_TIMES)
+    CLUSTER_COUNT = 5 # for testing
+    # labels = spectral_clustering(DRIVING_TIMES.astype(np.float64), CLUSTER_COUNT) # Produces a different result every time
 
+    print("Clustering...")
+    labels = KMeans(CLUSTER_COUNT, random_state=0).fit_predict(points)
+    # labels = AgglomerativeClustering(CLUSTER_COUNT).fit_predict(points)
+    print(labels)
+
+    # How many points are in each cluster:
+    unique, counts = np.unique(labels, return_counts=True)
+    print("Points in Cluster x: "+str(dict(zip(unique, counts))))
+
+    # labels -> sets of points (The real Clusters)
+    clusterSets = labelsToSets(labels, CLUSTER_COUNT)
+
+    for clusterNr, cluster in enumerate(clusterSets):
+        clusterPoints = [points[p] for p in cluster]
+        # Plot:
+        plt.scatter([pp[0] for pp in clusterPoints], [pp[1] for pp in clusterPoints])
+        for p in clusterPoints:
+            plt.annotate(str(clusterNr), (p[0], p[1]))
+
+        # print("__________________________________")
+        # print("Cluster: "+str(cluster))
+        time, path = approximateTimeNeededWithKNN(DRIVING_TIMES, cluster)
+        # print("path: "+str(path))
+        # print("Cluster: "+str(clusterNr)+" time KNN: "+str(time))
+
+        # Plot Path:
+        if PLOT_PATH:
+            lastP = None
+            for p in path:
+                if lastP is None:
+                    lastP = p
+                    continue
+                plt.plot([points[p][0],points[lastP][0]], [points[p][1],points[lastP][1]],c="black")
+                lastP = p
+
+    plt.annotate("Lab",(0,0))
+    plt.show()
 
 
 
