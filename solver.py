@@ -60,7 +60,7 @@ for clusterNr, cluster in enumerate(clusterSets):
 
     # TODO: labor punkt muss noch mit rein
     print("search ideal path (2-opt)...")
-    path, timeNeeded = opt2(B, False)
+    path, timeNeeded = opt2(B, False) # True = Schnell
     paths.append(path)
     print(path)
 
