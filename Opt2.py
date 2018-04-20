@@ -4,9 +4,10 @@ import random
 import math
 
 
-def opt2(DRIVING_TIMES):
+def opt2(DRIVING_TIMES, fidelity):
 
     NumberOfDest = np.shape(DRIVING_TIMES)[0]
+
     DRIVING_TIMES_COPY = np.array(DRIVING_TIMES).astype(np.int16)
     DELETE_ARRAY = [0]*(NumberOfDest)
     Route = [0]
@@ -51,7 +52,7 @@ def opt2(DRIVING_TIMES):
 #             counter = 0
 #             print(supcounter)
 #    print(minTime, "min")
-    return Route1
+    return Route1, mintime
 
 
 
@@ -124,6 +125,7 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance):
                 meandiffArr[ArrCounter] = abs(meandiffArr[ArrCounter - 1] - delta)
             else:
                 meandiffArr[0] = abs(meandiffArr[len(meandiffArr) - 1] - delta)
+            print(delta, counter)
             best_map = np.copy(ran_map)
             best_distance = ran_distance
         else:
@@ -137,7 +139,7 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance):
         #meandiff1 = meandiff
         #meandiff = totaldiff/counter
         #abldiff = abs(meandiff1 - meandiff)
-        print(meandiff, tolerance)
+        #print(meandiff, tolerance)
         #print(abldiff)
         #temp = t0 * np.power(0.99, counter)
         temp = t0 / (np.log(counter))
