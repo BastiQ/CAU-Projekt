@@ -244,7 +244,7 @@ def plot(points, clusterSets, DRIVING_TIMES=None, paths=None):
     plt.show()
 
 
-def my_special_KMeans(X, n_clusters, startAngleRange=120,rseed=0):
+def my_special_KMeans(X, n_clusters, startAngleRange=120, rseed=0):
     # 1. Randomly choose clusters
     # rng = np.random.RandomState(rseed)
     # i = rng.permutation(X.shape[0])[:n_clusters]
@@ -256,15 +256,15 @@ def my_special_KMeans(X, n_clusters, startAngleRange=120,rseed=0):
     absoluteCenter = X.mean(0)
     startAngle = np.arcsin(np.divide(absoluteCenter[0],np.sqrt(np.square(absoluteCenter[0])+np.square(absoluteCenter[1])))) * 57.2958 # rad->deg: * 57,2958
     # startAngle: add this angle to put the start Points in the right direction.
-    centers = []
     alpha = startAngleRange/n_clusters
     radius = absoluteCenter[1] # set radius to mean y of all datapoints
+    centers = []
     for i in range(n_clusters):
         currentalpha = (i-(int(n_clusters/2)))*alpha + startAngle
         centers.append([radius*np.sin(0.0174533*currentalpha), radius*np.cos(0.0174533*currentalpha)]) # Numpy takes Rad, not degree -> *0.0174533
     centers = np.array(centers)
     # plt.scatter(X[:, 0], X[:, 1])
-    plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
+    # plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
     # plt.show()
 
     while True:
@@ -286,6 +286,8 @@ def my_special_KMeans(X, n_clusters, startAngleRange=120,rseed=0):
         centers = new_centers
 
     plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
+    for c in centers:
+        plt.annotate("Center",(c[0],c[1]))
     return centers, labels
 
 

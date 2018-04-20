@@ -5,7 +5,7 @@ import math
 
 
 def opt2(DRIVING_TIMES, fidelity):
-    merken = False
+    merken = True
     NumberOfDest = np.shape(DRIVING_TIMES)[0]
 
     DRIVING_TIMES_COPY = np.array(DRIVING_TIMES).astype(np.int16)
@@ -32,10 +32,13 @@ def opt2(DRIVING_TIMES, fidelity):
     Route = np.array(Route)
     RouteSlice = Route[1:(len(Route) - 1)]
 
-    for i in range (0,2):
+    for i in range (0,1):
         np.random.shuffle(RouteSlice)
+        print("test1")
         NewRoute = start_opt2(Route, DRIVING_TIMES, fidelity, merken)
+        print("test2")
         newmintime = compute_total_distance(NewRoute, DRIVING_TIMES)
+        print("test3")
         if(newmintime < mintime):
             mintime = newmintime
             RouteOut = np.copy(NewRoute)
@@ -98,11 +101,12 @@ def opt2Main(best_map, driving_map):
 
 def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity, merken):
     meandiff = tolerance + 1
-    meandiffArr = np.array((len(best_map) * len(best_map)) * [1000])
+    meandiffArr = np.array((best_map.shape[0]*best_map.shape[0]) * [1000])
     totaldiff = 100
     counter = 0
     ArrCounter = 0
-    RandomArray = np.array(int(len(best_map) * 0.1) * [0])
+    # RandomArray = np.array(int(best_map.shape[0] * 0.1) * [0])
+    RandomArray = np.zeros(int(best_map.shape[0] * 0.1))
     temp = t0
     ran1 = -1
     ran2 = -1
@@ -139,10 +143,10 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity, mer
             try:
                 diff = 1 / (1 + math.exp((delta)/temp))
                 if (fidelity):
-                    temp = t0 * np.power(0.99, counter)
+                    temp = t0 * np.power(0.8, counter)
                 else:
-                    #temp = t0 * np.power(0.99, counter)
-                    temp = t0 / (math.log(counter + 2))
+                    # temp = t0 * np.power(0.99, counter)
+                    temp = t0 / (math.log(counter + 1))
             except OverflowError:
                 if delta < 0:
                     diff = 1
@@ -154,26 +158,23 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity, mer
             else:
                 diff = 0
         counter += 1
+        print(meandiff)
 
-
-        meandiff = (np.sum(meandiffArr) / len(meandiffArr))
-
+        print(meandiffArr)
+        meandiff = (np.divide(np.sum(meandiffArr), meandiffArr.shape[0]))
+        print(ArrCounter)
         if diff > random.randrange(0, 1):
-            if ArrCounter > 0:
-                meandiffArr[ArrCounter] = abs(meandiffArr[ArrCounter - 1] - delta)
-            else:
-                meandiffArr[0] = abs(meandiffArr[len(meandiffArr) - 1] - delta)
-            #print(delta, counter, meandiff, temp)
+            meandiffArr[ArrCounter] = np.abs(delta)#meandiffArr[ArrCounter - 1] - delta)
+
             best_map = np.copy(ran_map)
             best_distance = ran_distance
         else:
-            meandiffArr[ArrCounter + 1] = 0
+            meandiffArr[ArrCounter] = 0
 
-        if(ArrCounter < (len(meandiffArr) - 2)):
+        if(ArrCounter < (meandiffArr.shape[0] - 1)):
             ArrCounter += 1
         else:
             ArrCounter = 0
-        #print(best_distance, temp)
 
 
     return best_map
@@ -181,9 +182,12 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity, mer
 
 def start_opt2(best_map, driving_map, fidelity, merken):
     best_map = opt2Main(best_map, driving_map)
+    print("testtest1")
     distance = compute_total_distance(best_map, driving_map)
+    print("testtest2")
 
-    best_map = annealing(best_map, distance, driving_map, 8, 0.6, fidelity, merken)
+    best_map = annealing(best_map, distance, driving_map, 8, 2, fidelity, merken)
+    print("testtest3")
     return best_map
 
 
