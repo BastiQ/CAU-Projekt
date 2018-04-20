@@ -12,7 +12,7 @@ from Clustering import plot
 np.set_printoptions(threshold=np.nan) # completely print big arrays
 
 # Configure:
-INSTANCE = "Testinstanzen/1_80.txt"
+INSTANCE = "Testinstanzen/2_30.txt"
 VEHICLE_COUNT = 1
 ###################################
 
