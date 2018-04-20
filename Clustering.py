@@ -226,8 +226,9 @@ def plot(points, clusterSets, DRIVING_TIMES=None, paths=None):
         clusterPoints = [points[p] for p in cluster]
         # Plot:
         plt.scatter([pp[0] for pp in clusterPoints], [pp[1] for pp in clusterPoints])
-        for p in clusterPoints:
-            plt.annotate(str(clusterNr), (p[0], p[1]))
+        for i,p in enumerate(clusterPoints):
+            plt.annotate(str(i), (p[0], p[1]))
+            # plt.annotate(str(clusterNr), (p[0], p[1]))
 
         # Plot Path:
         if paths:
@@ -285,9 +286,11 @@ def my_special_KMeans(X, n_clusters, startAngleRange=120, rseed=0):
             break
         centers = new_centers
 
-    plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
-    for c in centers:
-        plt.annotate("Center",(c[0],c[1]))
+    # if list(range(n_clusters)):
+
+    # plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
+    # for c in centers:
+    #     plt.annotate("Center",(c[0],c[1]))
     return centers, labels
 
 
