@@ -5,7 +5,7 @@ import math
 
 
 def opt2(DRIVING_TIMES, fidelity):
-    merken = True
+    merken = False
     NumberOfDest = np.shape(DRIVING_TIMES)[0]
 
     DRIVING_TIMES_COPY = np.array(DRIVING_TIMES).astype(np.int16)
@@ -32,7 +32,7 @@ def opt2(DRIVING_TIMES, fidelity):
     Route = np.array(Route)
     RouteSlice = Route[1:(len(Route) - 1)]
 
-    for i in range (0,1):
+    for i in range (0,2):
         np.random.shuffle(RouteSlice)
         NewRoute = start_opt2(Route, DRIVING_TIMES, fidelity, merken)
         newmintime = compute_total_distance(NewRoute, DRIVING_TIMES)
@@ -135,9 +135,14 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity, mer
         ran_distance = compute_total_distance(ran_map, driving_map)
         delta = ran_distance - best_distance
         #print(ran_distance, best_distance)
-        if(temp > 0.01):
+        if(temp > 0.000000001):
             try:
                 diff = 1 / (1 + math.exp((delta)/temp))
+                if (fidelity):
+                    temp = t0 * np.power(0.99, counter)
+                else:
+                    #temp = t0 * np.power(0.99, counter)
+                    temp = t0 / (math.log(counter + 2))
             except OverflowError:
                 if delta < 0:
                     diff = 1
@@ -168,12 +173,8 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity, mer
             ArrCounter += 1
         else:
             ArrCounter = 0
+        #print(best_distance, temp)
 
-        if(fidelity):
-            temp = t0 * np.power(0.8, counter)
-        else:
-            #temp = t0 * np.power(0.99, counter)
-            temp = t0/(math.log(counter + 1))
 
     return best_map
 
@@ -182,7 +183,7 @@ def start_opt2(best_map, driving_map, fidelity, merken):
     best_map = opt2Main(best_map, driving_map)
     distance = compute_total_distance(best_map, driving_map)
 
-    best_map = annealing(best_map, distance, driving_map, 8, 2, fidelity, merken)
+    best_map = annealing(best_map, distance, driving_map, 8, 0.6, fidelity, merken)
     return best_map
 
 
