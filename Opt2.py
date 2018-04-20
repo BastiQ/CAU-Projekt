@@ -5,7 +5,7 @@ import math
 
 
 def opt2(DRIVING_TIMES, fidelity):
-    merken = True
+    merken = False
     NumberOfDest = np.shape(DRIVING_TIMES)[0]
 
     DRIVING_TIMES_COPY = np.array(DRIVING_TIMES).astype(np.int16)
@@ -32,7 +32,7 @@ def opt2(DRIVING_TIMES, fidelity):
     Route = np.array(Route)
     RouteSlice = Route[1:(len(Route) - 1)]
 
-    for i in range (0,1):
+    for i in range (0,2):
         np.random.shuffle(RouteSlice)
         print("test1")
         NewRoute = start_opt2(Route, DRIVING_TIMES, fidelity, merken)
@@ -143,10 +143,11 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity, mer
             try:
                 diff = 1 / (1 + math.exp((delta)/temp))
                 if (fidelity):
-                    temp = t0 * np.power(0.8, counter)
+                    temp = t0 * np.power(0.99, counter)
                 else:
-                    # temp = t0 * np.power(0.99, counter)
-                    temp = t0 / (math.log(counter + 1))
+                    #temp = t0 * np.power(0.99, counter)
+                    #temp = t0 / (math.log(counter + 2))
+                    temp = t0 * np.power(0.8, counter)
             except OverflowError:
                 if delta < 0:
                     diff = 1
@@ -175,6 +176,7 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity, mer
             ArrCounter += 1
         else:
             ArrCounter = 0
+        #print(best_distance, temp)
 
 
     return best_map
