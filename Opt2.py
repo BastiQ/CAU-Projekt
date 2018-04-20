@@ -32,7 +32,7 @@ def opt2(DRIVING_TIMES, fidelity):
     Route = np.array(Route)
     RouteSlice = Route[1:(len(Route) - 1)]
 
-    for i in range (0,10):
+    for i in range (0,1):
         np.random.shuffle(RouteSlice)
         NewRoute = start_opt2(Route, DRIVING_TIMES, fidelity, merken)
         newmintime = compute_total_distance(NewRoute, DRIVING_TIMES)
@@ -135,14 +135,19 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity, mer
         ran_distance = compute_total_distance(ran_map, driving_map)
         delta = ran_distance - best_distance
         #print(ran_distance, best_distance)
-        try:
-            diff = 1 / (1 + math.exp((delta)/temp))
-        except OverflowError:
+        if(temp > 0.01):
+            try:
+                diff = 1 / (1 + math.exp((delta)/temp))
+            except OverflowError:
+                if delta < 0:
+                    diff = 1
+                else:
+                   diff = 0
+        else:
             if delta < 0:
                 diff = 1
             else:
                 diff = 0
-
         counter += 1
 
 
