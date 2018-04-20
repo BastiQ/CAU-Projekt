@@ -30,7 +30,7 @@ def opt2(DRIVING_TIMES, fidelity):
 
     print(compute_total_distance(Route, DRIVING_TIMES), "simple")
     Route = np.array(Route)
-    Route1 = start_opt2(Route, DRIVING_TIMES)
+    Route1 = start_opt2(Route, DRIVING_TIMES, fidelity)
     mintime = compute_total_distance(Route1, DRIVING_TIMES)
     print(mintime, "nach cooling")
     counter = 0
@@ -88,7 +88,7 @@ def opt2Main(best_map, driving_map):
     return _map
 
 
-def annealing(best_map, best_distance, driving_map, t0, tolerance):
+def annealing(best_map, best_distance, driving_map, t0, tolerance, fidelity):
     meandiff = tolerance + 1
     meandiffArr = np.array((len(best_map) * len(best_map)) * 10 * [1000])
     totaldiff = 100
@@ -141,18 +141,20 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance):
         #abldiff = abs(meandiff1 - meandiff)
         #print(meandiff, tolerance)
         #print(abldiff)
-        temp = t0 * np.power(0.999, counter)
-        #temp = t0 / (np.log(counter))
+        if(fidelity):
+            temp = t0 * np.power(0.999, counter)
+        else:
+            temp = t0 / (np.log(counter))
 
     return best_map
 
 
-def start_opt2(best_map, driving_map):
+def start_opt2(best_map, driving_map, fidelity):
     coolingTemp = 100000
     best_map = opt2Main(best_map, driving_map)
     distance = compute_total_distance(best_map, driving_map)
 
-    best_map = annealing(best_map, distance, driving_map, 5, 1)
+    best_map = annealing(best_map, distance, driving_map, 5, 1, fidelity)
 
     best_distance = compute_total_distance(best_map, driving_map)
     #print(best_distance, "nach")
