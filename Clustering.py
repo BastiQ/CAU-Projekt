@@ -244,25 +244,48 @@ def plot(points, clusterSets, DRIVING_TIMES=None, paths=None):
     plt.show()
 
 
-def my_special_KMeans(X, n_clusters, rseed=0):
+def my_special_KMeans(X, n_clusters, startAngleRange=120,rseed=0):
     # 1. Randomly choose clusters
-    rng = np.random.RandomState(rseed)
-    i = rng.permutation(X.shape[0])[:n_clusters]
-    centers = X[i]
+    # rng = np.random.RandomState(rseed)
+    # i = rng.permutation(X.shape[0])[:n_clusters]
+    # print(i)
+    # centers = X[i]
+    if n_clusters > X.shape[0]: # just in case
+        print("You want more Clusters then Points. Thats not possible (Func: my_special_KMeans)")
+
+    absoluteCenter = X.mean(0)
+    startAngle = np.arcsin(np.divide(absoluteCenter[0],np.sqrt(np.square(absoluteCenter[0])+np.square(absoluteCenter[1])))) * 57.2958 # rad->deg: * 57,2958
+    # startAngle: add this angle to put the start Points in the right direction.
+    centers = []
+    alpha = startAngleRange/n_clusters
+    radius = absoluteCenter[1] # set radius to mean y of all datapoints
+    for i in range(n_clusters):
+        currentalpha = (i-(int(n_clusters/2)))*alpha + startAngle
+        centers.append([radius*np.sin(0.0174533*currentalpha), radius*np.cos(0.0174533*currentalpha)]) # Numpy takes Rad, not degree -> *0.0174533
+    centers = np.array(centers)
+    # plt.scatter(X[:, 0], X[:, 1])
+    plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
+    # plt.show()
+
     while True:
-        # 2a. Assign labels based on closest center
-        labels = pairwise_distances_argmin(X, centers)
-        # 2b. Find new centers from means of points
+        labels = pairwise_distances_argmin(X, centers) # Assign labels based on closest center
         new_centers = np.zeros(centers.shape)
-        for i in range(n_clusters):
+        for i in range(n_clusters): # Find new centers from means of points
             clusterPoints = np.array(X[labels == i])
-            withLab = np.vstack([clusterPoints,[0,0]])
-            new_centers[i] = withLab.mean(0)
+            # withLab = np.vstack([clusterPoints,[0,0]]) # always consider the Lab
+            # moves the mean in the direction of the Lab, not always good!
+            # withLab = np.vstack([withLab,[0,0]]) # double Lab
+            if clusterPoints.size != 0: # there are no nearest neighbors
+                new_centers[i] = clusterPoints.mean(0)
+            else:
+                new_centers[i] = centers[i]
         # new_centers = np.array([X[labels == i].mean(0) for i in range(n_clusters)])
-        # 2c. Check for convergence
-        if np.all(centers == new_centers):
+
+        if np.all(centers == new_centers): # Check for convergence
             break
         centers = new_centers
+
+    plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
     return centers, labels
 
 
