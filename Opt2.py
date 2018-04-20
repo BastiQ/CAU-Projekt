@@ -89,8 +89,8 @@ def opt2Main(best_map, driving_map):
 
 
 def annealing(best_map, best_distance, driving_map, t0, tolerance):
-    meandiff = 1.1
-    meandiffArr = np.array((len(best_map) * len(best_map)) * [1000])
+    meandiff = tolerance + 1
+    meandiffArr = np.array((len(best_map) * len(best_map)) * 10 * [1000])
     totaldiff = 100
     counter = 0
     ArrCounter = 0
@@ -125,7 +125,7 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance):
                 meandiffArr[ArrCounter] = abs(meandiffArr[ArrCounter - 1] - delta)
             else:
                 meandiffArr[0] = abs(meandiffArr[len(meandiffArr) - 1] - delta)
-            print(delta, counter)
+            print(delta, counter, meandiff, temp)
             best_map = np.copy(ran_map)
             best_distance = ran_distance
         else:
@@ -141,8 +141,8 @@ def annealing(best_map, best_distance, driving_map, t0, tolerance):
         #abldiff = abs(meandiff1 - meandiff)
         #print(meandiff, tolerance)
         #print(abldiff)
-        #temp = t0 * np.power(0.99, counter)
-        temp = t0 / (np.log(counter))
+        temp = t0 * np.power(0.999, counter)
+        #temp = t0 / (np.log(counter))
 
     return best_map
 
@@ -152,7 +152,7 @@ def start_opt2(best_map, driving_map):
     best_map = opt2Main(best_map, driving_map)
     distance = compute_total_distance(best_map, driving_map)
 
-    best_map = annealing(best_map, distance, driving_map, 10, 0.00001)
+    best_map = annealing(best_map, distance, driving_map, 5, 1)
 
     best_distance = compute_total_distance(best_map, driving_map)
     #print(best_distance, "nach")
