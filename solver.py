@@ -13,7 +13,7 @@ from Clustering import plot
 np.set_printoptions(threshold=np.nan) # completely print big arrays
 
 # Configure:
-INSTANCE = "Testinstanzen/1_50.txt"
+INSTANCE = "Testinstanzen/1_10.txt"
 VEHICLE_COUNT = 1
 ###################################
 
@@ -64,9 +64,9 @@ for clusterNr, cluster in enumerate(clusterSets):
     t0 = time.time()
     path, timeNeeded = opt2(B, True)
     t1 = time.time()
-    print(t1 - t0)
+    print((t1 - t0), timeNeeded)
     paths.append(path)
-    print(path)
+    #print(path)
 
 plot(points,clusterSets,None,paths)
 
