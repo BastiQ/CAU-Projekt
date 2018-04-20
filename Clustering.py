@@ -256,17 +256,24 @@ def my_special_KMeans(X, n_clusters, startAngleRange=120, rseed=0):
 
     absoluteCenter = X.mean(0)
     startAngle = np.arcsin(np.divide(absoluteCenter[0],np.sqrt(np.square(absoluteCenter[0])+np.square(absoluteCenter[1])))) * 57.2958 # rad->deg: * 57,2958
+    print(startAngle)
     # startAngle: add this angle to put the start Points in the right direction.
     alpha = startAngleRange/n_clusters
     radius = absoluteCenter[1] # set radius to mean y of all datapoints
     centers = []
+    # Seperating the Points between the positive and the negative axis:
+    if n_clusters & 0x1: # odd (ungerade)
+        factor = (n_clusters-1)/2
+    else:
+        factor = n_clusters/2 - 0.5
+    print((0-(np.round(np.divide(n_clusters,2),2))))
     for i in range(n_clusters):
-        currentalpha = (i-(int(n_clusters/2)))*alpha + startAngle
+        currentalpha = (-factor+i*factor)/(n_clusters/2)*alpha + startAngle # can be optimized
         centers.append([radius*np.sin(0.0174533*currentalpha), radius*np.cos(0.0174533*currentalpha)]) # Numpy takes Rad, not degree -> *0.0174533
     centers = np.array(centers)
-    # plt.scatter(X[:, 0], X[:, 1])
-    # plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
-    # plt.show()
+    plt.scatter(X[:, 0], X[:, 1])
+    plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
+    plt.show()
 
     while True:
         labels = pairwise_distances_argmin(X, centers) # Assign labels based on closest center
@@ -286,7 +293,10 @@ def my_special_KMeans(X, n_clusters, startAngleRange=120, rseed=0):
             break
         centers = new_centers
 
-    # if list(range(n_clusters)):
+    print(labels)
+    for i in list(range(n_clusters)):
+        if i not in labels.tolist():
+            print("One CLuster hase no points in it")
 
     # plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
     # for c in centers:

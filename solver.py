@@ -62,11 +62,13 @@ for CLUSTER_COUNT in range(2, 6):
         delete = [d for d in range(1,B.shape[0]) if d not in cluster]
         B = np.delete(B, (delete), axis=0)
         B = np.delete(B, (delete), axis=1)
+        if(B.shape[0] == 1):
+            plot(points, clusterSets)
 
         print("Search ideal path (2-opt + annealing)...")
         path, timeNeeded = opt2(B, True) # True = Fast
-
         print("Done.")
+
         # Path Points to original Points:
         if cluster[0] != 0:
             cluster = [0] + cluster
@@ -79,7 +81,7 @@ for CLUSTER_COUNT in range(2, 6):
         paths.append(newPath)
         times.append(timeNeeded)
 
-    plot(points, clusterSets, None, paths)
+    # plot(points, clusterSets, None, paths)
     print("Total Time: "+str(sum(times)))
     if sum(times) < optimalTotalTime:
         optimalClusterSets = clusterSets
