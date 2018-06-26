@@ -1,6 +1,6 @@
 # Some Infos and Ideas:
 # The kartisian space calculated from the drivingTime Matrix is n-1 dimensional.
-# I have tryed to write my own algorithems for getting the Problem down to 2 Dimensions: (__distanceMatrixToPoints_onlyFirstThree and __distanceMatrixToPoints_midEuclid)
+# I have tryed to write my own algorithems to get the Problem down to 2 Dimensions: (__distanceMatrixToPoints_onlyFirstThree and __distanceMatrixToPoints_midEuclid)
 # The mid Euclid dose not work really well (maybe because the first points set in 2d are completely wrong, or an error in the code (i havend completely checked its correctness))
 # The onlyFirstThree Alg. works suprisingly better, although it only considered the distances to the first three points
 # I found the Problem under the Name "Distance geometry problem with inaccurate distances":
@@ -10,15 +10,24 @@ import numpy as np
 import copy
 import random
 import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances_argmin
-from sklearn.cluster import AgglomerativeClustering
+#from sklearn.cluster import KMeans
+#from sklearn.cluster import AgglomerativeClustering
+'''
+    File name: Clustering.py
+    Author: Sebastian Nichtern
+    Date created: 13.04.2018
+    Date last modified: 26.06.2018
+    Python Version: 3.6.3
+'''
+
 
 #############   GLOBAL VARS   #############
 optimalSecondPoint = None
 PLOT_HERE = False
 
-########################################   DIMENSION REDUCTION   ########################################
+
+'''   DIMENSION REDUCTION   '''
 
 def __distanceMatrixToPointsIfExact(A):
     # https://math.stackexchange.com/questions/156161/finding-the-coordinates-of-points-from-distance-matrix
@@ -185,7 +194,8 @@ def __to2D(A):
     # plt.show()
     return points
 
-########################################   CLUSTERING   ########################################
+
+'''   CLUSTERING   '''
 
 def labelsToSets(labels, CLUSTER_COUNT):
     clusterSets = [[] for _ in range(CLUSTER_COUNT)]
@@ -221,6 +231,66 @@ def approximateTimeNeededWithKNN(A, cluster):
 
     return distanceSum, path
 
+def my_special_KMeans(X, n_clusters, startAngleRange=120, rseed=0):
+    # TODO: I think Clusters can be also be found in (n-1)d space, not only 2d.
+    # 1. Randomly choose clusters # Instead I calculate meaningfull centroid points.
+    # rng = np.random.RandomState(rseed)
+    # i = rng.permutation(X.shape[0])[:n_clusters]
+    # print(i)
+    # centers = X[i]
+    if n_clusters > X.shape[0]: # just in case
+        print("You want more Clusters then Points. Thats not possible (Func: my_special_KMeans)")
+
+    absoluteCenter = X.mean(0)
+    startAngle = np.arcsin(np.divide(absoluteCenter[0],np.sqrt(np.square(absoluteCenter[0])+np.square(absoluteCenter[1])))) * 57.2958 # rad->deg: * 57,2958
+    # startAngle: add this angle to put the start Points in the right direction.
+    alpha = startAngleRange/n_clusters
+    radius = absoluteCenter[1] # set radius to mean y of all datapoints
+    centers = []
+    # Seperating the Points between the positive and the negative axis:
+    if n_clusters & 0x1: # odd (ungerade)
+        factor = (n_clusters-1)/2
+    else:
+        factor = n_clusters/2 - 0.5
+    for i in range(n_clusters):
+        currentalpha = (-factor+i*factor)/(n_clusters/2)*alpha + startAngle # can be optimized
+        centers.append([radius*np.sin(0.0174533*currentalpha), radius*np.cos(0.0174533*currentalpha)]) # Numpy takes Rad, not degree -> *0.0174533
+    centers = np.array(centers)
+    # plt.scatter(X[:, 0], X[:, 1])
+    # plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
+    # plt.show()
+
+    while True:
+        # TODO: I think Clusters can be also be found in (n-1)d space, not only 2d.
+        labels = pairwise_distances_argmin(X, centers) # Assign labels based on closest center
+        new_centers = np.zeros(centers.shape)
+        for i in range(n_clusters): # Find new centers from means of points
+            clusterPoints = np.array(X[labels == i])
+            # withLab = np.vstack([clusterPoints,[0,0]]) # always consider the Lab
+            # moves the mean in the direction of the Lab, not always good!
+            # withLab = np.vstack([withLab,[0,0]]) # double Lab
+            if clusterPoints.size != 0: # there are no nearest neighbors
+                new_centers[i] = clusterPoints.mean(0)
+            else:
+                new_centers[i] = X[random.randrange(X.shape[0])]
+        # new_centers = np.array([X[labels == i].mean(0) for i in range(n_clusters)])
+
+        if np.all(centers == new_centers): # Check for convergence
+            break
+        centers = new_centers
+
+    for i in list(range(n_clusters)):
+        if i not in labels.tolist():
+            print("One Cluster hase no points in it")
+
+    # plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
+    # for c in centers:
+    #     plt.annotate("Center",(c[0],c[1]))
+    return centers, labels
+
+
+'''   PLOTTING   '''
+
 def plot(points, clusterSets, DRIVING_TIMES=None, paths=None):
     for clusterNr, cluster in enumerate(clusterSets):
         clusterPoints = [points[p] for p in cluster]
@@ -242,87 +312,31 @@ def plot(points, clusterSets, DRIVING_TIMES=None, paths=None):
                 lastP = p
 
     plt.annotate("Lab",(0,0))
+    plt.axis('off')
     plt.show()
 
 
-def my_special_KMeans(X, n_clusters, startAngleRange=120, rseed=0):
-    # 1. Randomly choose clusters
-    # rng = np.random.RandomState(rseed)
-    # i = rng.permutation(X.shape[0])[:n_clusters]
-    # print(i)
-    # centers = X[i]
-    if n_clusters > X.shape[0]: # just in case
-        print("You want more Clusters then Points. Thats not possible (Func: my_special_KMeans)")
-
-    absoluteCenter = X.mean(0)
-    startAngle = np.arcsin(np.divide(absoluteCenter[0],np.sqrt(np.square(absoluteCenter[0])+np.square(absoluteCenter[1])))) * 57.2958 # rad->deg: * 57,2958
-    print(startAngle)
-    # startAngle: add this angle to put the start Points in the right direction.
-    alpha = startAngleRange/n_clusters
-    radius = absoluteCenter[1] # set radius to mean y of all datapoints
-    centers = []
-    # Seperating the Points between the positive and the negative axis:
-    if n_clusters & 0x1: # odd (ungerade)
-        factor = (n_clusters-1)/2
-    else:
-        factor = n_clusters/2 - 0.5
-    print((0-(np.round(np.divide(n_clusters,2),2))))
-    for i in range(n_clusters):
-        currentalpha = (-factor+i*factor)/(n_clusters/2)*alpha + startAngle # can be optimized
-        centers.append([radius*np.sin(0.0174533*currentalpha), radius*np.cos(0.0174533*currentalpha)]) # Numpy takes Rad, not degree -> *0.0174533
-    centers = np.array(centers)
-    plt.scatter(X[:, 0], X[:, 1])
-    plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
-    plt.show()
-
-    while True:
-        labels = pairwise_distances_argmin(X, centers) # Assign labels based on closest center
-        new_centers = np.zeros(centers.shape)
-        for i in range(n_clusters): # Find new centers from means of points
-            clusterPoints = np.array(X[labels == i])
-            # withLab = np.vstack([clusterPoints,[0,0]]) # always consider the Lab
-            # moves the mean in the direction of the Lab, not always good!
-            # withLab = np.vstack([withLab,[0,0]]) # double Lab
-            if clusterPoints.size != 0: # there are no nearest neighbors
-                new_centers[i] = clusterPoints.mean(0)
-            else:
-                new_centers[i] = centers[i]
-        # new_centers = np.array([X[labels == i].mean(0) for i in range(n_clusters)])
-
-        if np.all(centers == new_centers): # Check for convergence
-            break
-        centers = new_centers
-
-    print(labels)
-    for i in list(range(n_clusters)):
-        if i not in labels.tolist():
-            print("One CLuster hase no points in it")
-
-    # plt.scatter([c[0] for c in centers], [c[1] for c in centers], color="red")
-    # for c in centers:
-    #     plt.annotate("Center",(c[0],c[1]))
-    return centers, labels
-
-
-
+'''   EXECUTION   '''
 
 def cluserting(DRIVING_TIMES, CLUSTER_COUNT):
-    print("Finding best 2D fit...")
+    # print("Finding best 2D fit...")
     points = __to2D(DRIVING_TIMES)
     # CLUSTER_COUNT = 5 # for testing
     # labels = spectral_clustering(DRIVING_TIMES.astype(np.float64), CLUSTER_COUNT) # Produces a different result every time
 
-    print("Clustering...")
+    ''' Find Clusters '''
+    # print("Clustering...")
     # labels = KMeans(CLUSTER_COUNT, random_state=0).fit_predict(points)
-    centers, labels = my_special_KMeans(points,CLUSTER_COUNT)
     # labels = AgglomerativeClustering(CLUSTER_COUNT).fit_predict(points)
+    centers, labels = my_special_KMeans(points,CLUSTER_COUNT)
     # print(labels)
+    # TODO: Finding a more problem specific way of clustering
 
-    # How many points are in each cluster:
+    ''' How many points are in each cluster: '''
     unique, counts = np.unique(labels, return_counts=True)
     # print("Points in Cluster x: "+str(dict(zip(unique, counts))))
 
-    # labels -> sets of points (The real Clusters)
+    ''' labels -> sets of points (The real Clusters) '''
     clusterSets = labelsToSets(labels, CLUSTER_COUNT)
 
     if PLOT_HERE:
@@ -342,8 +356,6 @@ def cluserting(DRIVING_TIMES, CLUSTER_COUNT):
     return points, clusterSets
 
 
-
-
-# Other Alorithems (don't fit this problem):
-# 1. Random Projection to reduce Dimensions is only for measured data, with features (Variables). -> (Training set, target Values) (X : numpy array of shape [n_samples, n_features], y : numpy array of shape [n_samples])
+# Other Alorithms (Not feasible for this problem):
+# 1. Random Projection to reduce Dimensions is only for labeled data -> (Training set, target Values) (X : numpy array of shape [n_samples, n_features], y : numpy array of shape [n_samples])
 # Use of that Alg.: http://scikit-learn.org/stable/modules/random_projection.html

@@ -3,6 +3,13 @@ import itertools as it
 import random
 import math
 
+'''
+    File name: Opt2.py
+    Author: Hendrik E.
+    Date created: 13.04.2018
+    Date last modified: 20.04.2018
+    Python Version: 3.6.3
+'''
 
 def opt2(DRIVING_TIMES, fidelity):
     merken = True
@@ -36,7 +43,7 @@ def opt2(DRIVING_TIMES, fidelity):
     else:
         entity = 1
     for i in range (0,entity):
-        print(i)
+        # print(i)
         np.random.shuffle(RouteSlice)
         NewRoute = start_opt2(Route, DRIVING_TIMES, fidelity, merken)
         newmintime = compute_total_distance(NewRoute, DRIVING_TIMES)
